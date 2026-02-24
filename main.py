@@ -1,45 +1,42 @@
 import random
 
 
-# 1. Definiamo la classe base per contenere i dati della singola domanda
+# definisco classe base per contenere i dati della singola domanda
 class Domanda:
     def __init__(self, testo, livello, corretta, errata1, errata2, errata3):
         self.testo = testo
         self.livello = int(livello)
         self.corretta = corretta
-        # Salviamo tutte le risposte in una lista per comodità
-        self.risposte = [corretta, errata1, errata2, errata3]
+        self.risposte = [corretta, errata1, errata2, errata3] # salvo tutte le risposte anche in una lista per comodità
 
 
-# 2. Funzione per leggere il file txt e creare le domande
+# funzione per leggere il file txt e creare le domande
 def carica_domande(nome_file):
     domande_per_livello = {}
 
     with open(nome_file, 'r', encoding='utf-8') as f:
-        # Leggiamo tutte le righe, ma teniamo SOLO quelle che non sono vuote
-        # Questo ci salva dal problema della riga vuota tra una domanda e l'altra
         righe = [riga.strip() for riga in f if riga.strip()]
+        # riga.strip() dà false se vuota --> risolve prob riga vuota
 
-    # Analizziamo la lista a blocchi di 6 (proprio come dicevamo prima!)
-    for i in range(0, len(righe), 6):
-        if i + 5 < len(righe):  # Controllo di sicurezza
+    # analizzo la lista a blocchi di 6 (dal momento che non ho più righe vuote)
+    for i in range(0, len(righe), 6): # indice: start 0 incluso, step 6 non incluso --> 0, 1, 2, 3, 4, 5, STOP!
+        if i + 5 < len(righe): # controllo di sicurezza
             d = Domanda(righe[i], righe[i + 1], righe[i + 2], righe[i + 3], righe[i + 4], righe[i + 5])
 
-            # Se il livello non esiste ancora nel dizionario, creiamo una lista vuota
-            if d.livello not in domande_per_livello:
-                domande_per_livello[d.livello] = []
+            if d.livello not in domande_per_livello: domande_per_livello[d.livello] = []
+            # se il livello non esiste ancora nel dizionario, creo una lista vuota
 
-            # Aggiungiamo la domanda al suo livello corrispondente
             domande_per_livello[d.livello].append(d)
+            # aggiungo la domanda al suo livello corrispondente
 
     return domande_per_livello
 
 
-# 3. Funzione per aggiornare la classifica
+# funzione per aggiornare la classifica
 def salva_punteggio(nickname, punti, nome_file="punti.txt"):
     classifica = []
 
-    # Proviamo a leggere i vecchi punteggi (se il file esiste)
+    # proviamo a leggere i vecchi punteggi (se il file esiste)
     try:
         with open(nome_file, 'r', encoding='utf-8') as f:
             for riga in f:
@@ -47,14 +44,13 @@ def salva_punteggio(nickname, punti, nome_file="punti.txt"):
                 if len(parti) >= 2:
                     classifica.append((parti[0], int(parti[1])))
     except FileNotFoundError:
-        pass  # Se è la prima partita e il file non esiste, andiamo avanti
+        pass  # se è la prima partita e il file non esiste, andiamo avanti
 
-    # Aggiungiamo il giocatore attuale
+    # aggiungo il giocatore attuale
     classifica.append((nickname, punti))
 
-    # Ordiniamo la classifica in base ai punti (il secondo elemento della tupla, indice 1)
-    # reverse=True fa in modo che sia decrescente (dal più alto al più basso)
-    classifica.sort(key=lambda x: x[1], reverse=True)
+    # ordino la classifica in base ai punti (il secondo elemento della tupla, indice 1)
+    classifica.sort(key=lambda x: x[1], reverse=True) # reverse=True fa in modo che sia decrescente (dal più alto al più basso)
 
     # Salviamo tutto nel file sovrascrivendolo
     with open(nome_file, 'w', encoding='utf-8') as f:
@@ -62,28 +58,26 @@ def salva_punteggio(nickname, punti, nome_file="punti.txt"):
             f.write(f"{nick} {score}\n")
 
 
-# 4. Il cuore del gioco
+# il gioco vero e proprio
 def gioca():
     domande = carica_domande("domande.txt")
     livello_corrente = 0
     punti = 0
 
-    # Il gioco continua finché ci sono domande per il livello corrente
-    while livello_corrente in domande:
-        # Peschiamo una domanda a caso per questo livello
-        domanda_scelta = random.choice(domande[livello_corrente])
+    while livello_corrente in domande: # controlla che il livello sia presente come chiave del dizionario
+        domanda_scelta = random.choice(domande[livello_corrente]) # peschiamo una domanda a caso per questo livello
 
         print(f"\nLivello {livello_corrente}) {domanda_scelta.testo}")
 
-        # Copiamo la lista delle risposte per non modificare l'originale e le mescoliamo
+        # shallow copy (nuova lista, stessi oggetti) della lista delle risposte per mescolare
         risposte_mescolate = list(domanda_scelta.risposte)
         random.shuffle(risposte_mescolate)
 
-        # Troviamo quale numero (da 1 a 4) corrisponde alla risposta corretta
+        # troviamo quale numero (da 1 a 4) corrisponde alla risposta corretta
         indice_corretto = risposte_mescolate.index(domanda_scelta.corretta) + 1
 
-        # Stampiamo le opzioni
-        for i, risposta in enumerate(risposte_mescolate, start=1):
+        # Stampa delle opzioni
+        for i, risposta in enumerate(risposte_mescolate, start=1): # di default start=0
             print(f"\t{i}. {risposta}")
 
         scelta_utente = input("Inserisci la risposta: ")
@@ -95,13 +89,12 @@ def gioca():
             livello_corrente += 1
         else:
             print(f"Risposta sbagliata! La risposta corretta era: {indice_corretto}")
-            break  # Esce dal ciclo while e finisce la partita
+            break  # esce dal ciclo while e finisce la partita
 
     print(f"\nHai totalizzato {punti} punti!")
     nickname = input("Inserisci il tuo nickname: ")
     salva_punteggio(nickname, punti)
 
 
-# Questo fa partire il gioco solo se eseguiamo direttamente questo file
-if __name__ == "__main__":
-    gioca()
+# per far partire il gioco solo se eseguiamo direttamente questo file
+if __name__ == "__main__": gioca()
