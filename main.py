@@ -1,6 +1,7 @@
 import random
 
 from domanda import Domanda
+from giocatore import Giocatore
 
 
 # funzione per leggere il file txt e creare le domande
@@ -26,7 +27,7 @@ def carica_domande(nome_file):
 
 
 # funzione per aggiornare la classifica
-def salva_punteggio(nickname, punti, nome_file="punti.txt"):
+def salva_punteggio(nickname, punti, nome_file = "punti.txt"):
     classifica = []
 
     # proviamo a leggere i vecchi punteggi (se il file esiste)
@@ -35,20 +36,20 @@ def salva_punteggio(nickname, punti, nome_file="punti.txt"):
             for riga in f:
                 parti = riga.strip().split()
                 if len(parti) >= 2:
-                    classifica.append((parti[0], int(parti[1])))
+                    classifica.append(Giocatore(parti[0], int(parti[1])))
     except FileNotFoundError:
         pass  # se è la prima partita e il file non esiste, andiamo avanti
 
     # aggiungo il giocatore attuale
-    classifica.append((nickname, punti))
+    classifica.append(Giocatore(nickname, punti))
 
-    # ordino la classifica in base ai punti (il secondo elemento della tupla, indice 1)
-    classifica.sort(key=lambda x: x[1], reverse=True) # reverse=True fa in modo che sia decrescente (dal più alto al più basso)
+    # ordino la classifica in base ai punti (metodo __lt__ di Giocatore)
+    classifica.sort(reverse=True) # reverse=True fa in modo che sia decrescente (dal più alto al più basso)
 
     # Salviamo tutto nel file sovrascrivendolo
     with open(nome_file, 'w', encoding='utf-8') as f:
-        for nick, score in classifica:
-            f.write(f"{nick} {score}\n")
+        for giocatore in classifica:
+            f.write(f"{giocatore.nickname} {giocatore.punti}\n")
 
 
 # il gioco vero e proprio
@@ -69,17 +70,19 @@ def gioca():
         # troviamo quale numero (da 1 a 4) corrisponde alla risposta corretta
         indice_corretto = risposte_mescolate.index(domanda_scelta.corretta) + 1
 
-        # Stampa delle opzioni
+        # stampa delle opzioni
         for i, risposta in enumerate(risposte_mescolate, start=1): # di default start=0
             print(f"\t{i}. {risposta}")
 
         scelta_utente = input("Inserisci la risposta: ")
 
-        # Controlliamo se ha inserito un numero e se è quello giusto
+        # controlliamo se ha inserito un numero e se è quello giusto
         if scelta_utente.isdigit() and int(scelta_utente) == indice_corretto:
             print("Risposta corretta!")
             punti += 1
             livello_corrente += 1
+            if livello_corrente not in domande:
+                print("\nHai risposto a tutte le domande! Hai Vinto!")
         else:
             print(f"Risposta sbagliata! La risposta corretta era: {indice_corretto}")
             break  # esce dal ciclo while e finisce la partita
